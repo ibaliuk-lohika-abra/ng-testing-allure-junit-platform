@@ -1,38 +1,32 @@
+import org.jfrog.gradle.plugin.artifactory.dsl.PublisherConfig
+import java.lang.System.getenv
+
+val artifactoryUrl =
+    uri((getenv("ARTIFACTORY_URL") ?: "https://tixartifactory.jfrog.io/tixartifactory").trimEnd('/') + "/")
+val generatedClientArtifactId = "ng-testing-allure-junit-platform"
+val allureVersion = "2.14.0"
+
+group = "com.tradeix.infrastructure"
+version = "2.14.0"
+
 plugins {
     java
     `java-library`
     `maven-publish`
+    id("com.jfrog.artifactory") version "4.21.0"
 }
 
-group = "com.tradeix.infrastructure.allure.junitplatform"
-version = "2.14.0"
 
 repositories {
     mavenCentral()
 }
 
-val allureVersion = "2.14.0"
-val jupiterVersion = "5.7.0"
-
-val agent: Configuration by configurations.creating
 
 dependencies {
-    agent("org.aspectj:aspectjweaver")
     api("io.qameta.allure:allure-java-commons:$allureVersion")
-    implementation("org.junit.jupiter:junit-jupiter-api:$jupiterVersion")
-    implementation("org.junit.platform:junit-platform-launcher")
     implementation("io.qameta.allure:allure-test-filter:$allureVersion")
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.12.3")
-    testAnnotationProcessor("org.slf4j:slf4j-simple:1.7.30")
-    testAnnotationProcessor("io.qameta.allure:allure-descriptions-javadoc:$allureVersion")
-    testImplementation("io.github.glytching:junit-extensions:2.4.0")
-    testImplementation("org.assertj:assertj-core:3.19.0")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:$jupiterVersion")
-    testImplementation("org.junit.jupiter:junit-jupiter-params")
-    testImplementation("org.slf4j:slf4j-simple:1.7.30")
-    testImplementation("io.qameta.allure:allure-assertj:$allureVersion")
-    testImplementation("io.qameta.allure:allure-java-commons-test:$allureVersion")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$jupiterVersion")
+    implementation("org.junit.jupiter:junit-jupiter-api:5.7.0")
+    implementation("org.junit.platform:junit-platform-launcher")
 }
 
 tasks.test {
@@ -45,9 +39,6 @@ tasks.jar {
     }
 }
 
-
-val generatedClientArtifactId = "ng-testing-allure-junit-platform"
-
 publishing {
     publications {
         create<MavenPublication>(generatedClientArtifactId) {
@@ -59,4 +50,23 @@ publishing {
 
         }
     }
+}
+
+artifactory {
+    setContextUrl(artifactoryUrl)
+    publish(delegateClosureOf<PublisherConfig> {
+
+        repository(delegateClosureOf<groovy.lang.GroovyObject> {
+            setProperty("repoKey", "generic-local")
+            setProperty("username", getenv("ARTIFACTORY_USR"))
+            setProperty("password", getenv("ARTIFACTORY_PSW"))
+            setProperty("maven", true)
+        })
+
+        defaults(delegateClosureOf<groovy.lang.GroovyObject> {
+            invokeMethod("publications", generatedClientArtifactId)
+            setProperty("publishArtifacts", "true")
+            setProperty("publishPom", "true")
+        })
+    })
 }

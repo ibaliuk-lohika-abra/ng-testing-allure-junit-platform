@@ -1,1 +1,1 @@
-io.qameta.allure.junitplatform.AllurePostDiscoveryFilter
+com.tradeix.infrastructure.allure.junitplatform.AllurePostDiscoveryFilter
