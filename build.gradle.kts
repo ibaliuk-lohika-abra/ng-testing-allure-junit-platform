@@ -19,6 +19,13 @@ plugins {
 
 repositories {
     mavenCentral()
+    mavenLocal()
+    maven(artifactoryUrl.resolve("gradle-dev")) {
+        credentials {
+            username = getenv("ARTIFACTORY_USR")
+            password = getenv("ARTIFACTORY_PSW")
+        }
+    }
 }
 
 
@@ -57,7 +64,7 @@ artifactory {
     publish(delegateClosureOf<PublisherConfig> {
 
         repository(delegateClosureOf<groovy.lang.GroovyObject> {
-            setProperty("repoKey", "generic-local")
+            setProperty("repoKey", "gradle-dev-local")
             setProperty("username", getenv("ARTIFACTORY_USR"))
             setProperty("password", getenv("ARTIFACTORY_PSW"))
             setProperty("maven", true)
